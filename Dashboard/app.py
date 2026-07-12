@@ -1,81 +1,501 @@
 import dash
-from dash import Dash, html, dcc, Input, Output, State
+from dash import Dash, html, dcc, Input, Output
 import dash_bootstrap_components as dbc
+
 import pandas as pd
 from pathlib import Path
+
 import plotly.express as px
 import plotly.graph_objects as go
 
 
-# -------------------------------------------------
-# Load Data
-# -------------------------------------------------
+# =====================================================
+# AI DEFECT COMMAND CENTER
+# Predictive Quality Intelligence Platform
+# =====================================================
 
-data_path = Path("..") / "Data" / "Defects Database Sample.xlsx"
+
+# =====================================================
+# DATA LOADING
+# =====================================================
+
+data_path = (
+    Path("..")
+    / "Data"
+    / "Defects Database Sample.xlsx"
+)
+
 
 df = pd.read_excel(data_path)
+# Clean column names
+df.columns = df.columns.str.strip()
 
-# -------------------------------------------------
-# Dashboard Risk Intelligence Layer
-# -------------------------------------------------
 
-# Priority scoring
+# =====================================================
+# DATA INTELLIGENCE ENGINE
+# =====================================================
+
+
+# Dynamic Risk Classification
+
+def assign_risk(row):
+
+    score = 0
+
+
+    # Priority contribution
+
+    if row["Priority"] == "Critical":
+        score += 40
+
+    elif row["Priority"] == "High":
+        score += 30
+
+    elif row["Priority"] == "Med":
+        score += 20
+
+    else:
+        score += 10
+
+
+
+    # Customer Impact
+
+    if row["CustomerImpact"] == "Yes":
+        score += 30
+
+
+
+    # Aging
+
+    if row["DefectAge"] >= 45:
+        score += 20
+
+    elif row["DefectAge"] >= 30:
+        score += 10
+
+
+
+    # Comments / discussion activity
+
+    if row["CommentsCount"] >= 35:
+        score += 10
+
+
+
+    if score >= 75:
+        return "Critical"
+
+    elif score >= 55:
+        return "High"
+
+    elif score >= 35:
+        return "Medium"
+
+    else:
+        return "Low"
+
+
+
+df["RiskScore"] = df.apply(
+    lambda x: assign_risk(x),
+    axis=1
+)
+
+
+
+# =====================================================
+# AI INSIGHT ENGINE
+# =====================================================
+
+
+def generate_ai_insights(data):
+
+
+    total = len(data)
+
+
+    critical = len(
+        data[
+            data["RiskScore"]=="Critical"
+        ]
+    )
+
+
+    top_module = (
+        data["ModuleName"]
+        .value_counts()
+        .idxmax()
+    )
+
+
+    top_vendor = (
+        data["FixingVendor"]
+        .value_counts()
+        .idxmax()
+    )
+
+
+    impact_count = len(
+        data[
+            data["CustomerImpact"]=="Yes"
+        ]
+    )
+
+
+
+    insights = [
+
+        f"Analysis completed on {total} defects.",
+
+
+        f"{critical} defects are classified as Critical risk.",
+
+
+        f"{top_module} contains the highest defect concentration.",
+
+
+        f"{top_vendor} has the highest defect ownership volume.",
+
+
+        f"{impact_count} defects have customer impact exposure."
+
+    ]
+
+
+    return insights
+
+
+
+# =====================================================
+# VISUALIZATION FUNCTIONS
+# =====================================================
+
+
+
+# -------------------------------
+# Risk Sunburst
+# -------------------------------
+
+
+def create_risk_sunburst(data):
+
+
+    fig = px.sunburst(
+
+        data,
+
+        path=[
+
+            "RiskScore",
+
+            "ModuleName",
+
+            "FixingVendor"
+
+        ],
+
+        title="Risk Concentration Intelligence"
+
+    )
+
+
+    return fig
+
+
+
+# -------------------------------
+# Defect Treemap
+# -------------------------------
+
+
+def create_treemap(data):
+
+
+    fig = px.treemap(
+
+        data,
+
+        path=[
+
+            "ModuleName",
+
+            "DefectCategory"
+
+        ],
+
+        title="Defect Portfolio Landscape"
+
+    )
+
+
+    return fig
+
+
+
+# -------------------------------
+# Risk Heatmap
+# -------------------------------
+
+
+def create_heatmap(data):
+
+
+    temp = (
+
+        data
+
+        .groupby(
+
+            [
+
+                "ModuleName",
+
+                "Priority"
+
+            ]
+
+        )
+
+        .size()
+
+        .reset_index(
+
+            name="Count"
+
+        )
+
+    )
+
+
+    fig = px.density_heatmap(
+
+        temp,
+
+        x="Priority",
+
+        y="ModuleName",
+
+        z="Count",
+
+        title="Module Risk Heatmap"
+
+    )
+
+
+    return fig
+
+
+
+# -------------------------------
+# Vendor Intelligence
+# -------------------------------
+
+
+def create_vendor_chart(data):
+
+
+    vendor = (
+
+        data
+
+        .groupby("FixingVendor")
+
+        .agg(
+
+            Defects=("FixingVendor","count"),
+
+            AvgAge=("DefectAge","mean")
+
+        )
+
+        .reset_index()
+
+    )
+
+
+
+    fig = px.scatter(
+
+        vendor,
+
+        x="AvgAge",
+
+        y="Defects",
+
+        size="Defects",
+
+        hover_name="FixingVendor",
+
+        title="Vendor Performance Intelligence"
+
+    )
+
+
+    return fig
+
+
+
+# -------------------------------
+# Root Cause Analysis
+# -------------------------------
+
+
+def create_rootcause_chart(data):
+
+
+    rc = (
+
+        data["RootCause"]
+
+        .value_counts()
+
+        .reset_index()
+
+    )
+
+
+    rc.columns=[
+
+        "RootCause",
+
+        "Count"
+
+    ]
+
+
+
+    fig = px.bar(
+
+        rc,
+
+        x="RootCause",
+
+        y="Count",
+
+        title="Root Cause Intelligence"
+
+    )
+
+
+    return fig
+
+
+
+# -------------------------------
+# Module Intelligence
+# -------------------------------
+
+
+def create_module_chart(data):
+
+
+    modules=(
+
+        data["ModuleName"]
+
+        .value_counts()
+
+        .reset_index()
+
+    )
+
+
+    modules.columns=[
+
+        "Module",
+
+        "Defects"
+
+    ]
+
+
+    fig=px.bar(
+
+        modules,
+
+        x="Module",
+
+        y="Defects",
+
+        title="Module Risk Exposure"
+
+    )
+
+
+    return fig
+
 
 priority_score = {
-    "Critical": 100,
-    "High": 75,
-    "Med": 50,
-    "Low": 25
+
+    "Critical":100,
+    "High":75,
+    "Med":50,
+    "Low":25
+
 }
 
+
 df["PriorityScore"] = (
+
     df["Priority"]
     .map(priority_score)
     .fillna(25)
+
 )
 
 
-# Customer impact scoring
 
 customer_score = {
-    "Yes": 100,
-    "No": 0
+
+    "Yes":100,
+    "No":0
+
 }
 
+
 df["CustomerImpactScore"] = (
+
     df["CustomerImpact"]
     .map(customer_score)
     .fillna(0)
+
 )
 
 
-# Defect age contribution
 
 df["AgeScore"] = (
+
     df["DefectAge"]
     .clip(upper=60)
-    / 60
-    * 100
+    /
+    60
+    *
+    100
+
 )
 
 
-# Escalation contribution
 
 escalation_score = {
-    "Yes": 100,
-    "No": 0
+
+    "Yes":100,
+    "No":0
+
 }
 
+
 df["EscalationScore"] = (
+
     df["EscalationFlag (Yes/No)"]
     .map(escalation_score)
     .fillna(0)
+
 )
 
 
-# Combined Risk Score
 
-df["RiskScore"] = (
+df["NumericRiskScore"] = (
 
     df["PriorityScore"] * 0.35 +
 
@@ -88,36 +508,669 @@ df["RiskScore"] = (
 )
 
 
-# Risk Classification
 
-def assign_risk(score):
+def risk_category(score):
 
     if score >= 80:
         return "Critical"
 
-    elif score >= 60:
+    elif score >=60:
         return "High"
 
-    elif score >= 40:
+    elif score >=40:
         return "Medium"
 
     else:
         return "Low"
 
 
-df["RiskLevel"] = df["RiskScore"].apply(assign_risk)
+
+df["RiskLevel"] = (
+
+    df["NumericRiskScore"]
+    .apply(risk_category)
+
+)
+
+# =====================================================
+# APPLICATION INITIALIZATION
+# =====================================================
 
 
-# Simulated AI escalation probability
-# (for dashboard storytelling)
+app = Dash(
 
-df["EscalationProbability"] = (
-    df["RiskScore"]
-    .clip(0,100)
+    __name__,
+
+    external_stylesheets=[
+
+        dbc.themes.DARKLY
+
+    ]
+
 )
 
 
-# Create Risk Level from Risk Score
+
+app.title = (
+    "AI Defect Command Center | "
+    "Predictive Quality Intelligence Platform"
+)
+
+
+
+# =====================================================
+# FILTER OPTIONS
+# =====================================================
+
+
+environment_options = [
+
+    {
+        "label": x,
+        "value": x
+    }
+
+    for x in sorted(
+        df["Environment"].dropna().unique()
+    )
+
+]
+
+
+vendor_options = [
+
+    {
+        "label": x,
+        "value": x
+    }
+
+    for x in sorted(
+        df["FixingVendor"].dropna().unique()
+    )
+
+]
+
+
+module_options = [
+
+    {
+        "label": x,
+        "value": x
+    }
+
+    for x in sorted(
+        df["ModuleName"].dropna().unique()
+    )
+
+]
+
+
+risk_options = [
+
+    {
+        "label": x,
+        "value": x
+    }
+
+    for x in [
+
+        "Critical",
+        "High",
+        "Medium",
+        "Low"
+
+    ]
+
+]
+
+
+
+# =====================================================
+# KPI CARD COMPONENT
+# =====================================================
+
+
+def create_kpi_card(
+        title,
+        value,
+        description
+):
+
+
+    return dbc.Card(
+
+        [
+
+            html.H6(
+
+                title,
+
+                className="kpi-title"
+
+            ),
+
+
+            html.H2(
+
+                value,
+
+                className="kpi-value"
+
+            ),
+
+
+            html.P(
+
+                description,
+
+                className="kpi-description"
+
+            )
+
+        ],
+
+        className="kpi-card"
+
+    )
+
+
+
+# =====================================================
+# SIDEBAR
+# =====================================================
+
+
+sidebar = dbc.Col(
+
+    [
+
+        html.H4(
+
+            "Dashboard Filters",
+
+            className="sidebar-title"
+
+        ),
+
+
+        html.Hr(),
+
+
+
+        html.Label(
+            "Environment"
+        ),
+
+
+        dcc.Checklist(
+
+            id="environment-filter",
+
+            options=environment_options,
+
+            value=[],
+
+            className="filter-list"
+
+        ),
+
+
+
+        html.Br(),
+
+
+
+        html.Label(
+            "Vendor"
+        ),
+
+
+        dcc.Checklist(
+
+            id="vendor-filter",
+
+            options=vendor_options,
+
+            value=[],
+
+            className="filter-list"
+
+        ),
+
+
+
+        html.Br(),
+
+
+
+        html.Label(
+            "Module"
+        ),
+
+
+        dcc.Checklist(
+
+            id="module-filter",
+
+            options=module_options,
+
+            value=[],
+
+            className="filter-list"
+
+        ),
+
+
+
+        html.Br(),
+
+
+
+        html.Label(
+            "Risk Level"
+        ),
+
+
+        dcc.Checklist(
+
+            id="risk-filter",
+
+            options=risk_options,
+
+            value=[],
+
+            className="filter-list"
+
+        )
+
+
+    ],
+
+
+    width=3,
+
+
+    className="sidebar"
+
+)
+
+
+
+# =====================================================
+# EXECUTIVE OVERVIEW TAB
+# =====================================================
+
+
+executive_tab = dbc.Container(
+
+    [
+
+        dbc.Row(
+
+            [
+
+                dbc.Col(
+                    html.Div(id="total-kpi"),
+                    width=3
+                ),
+
+
+                dbc.Col(
+                    html.Div(id="critical-kpi"),
+                    width=3
+                ),
+
+
+                dbc.Col(
+                    html.Div(id="customer-kpi"),
+                    width=3
+                ),
+
+
+                dbc.Col(
+                    html.Div(id="ai-kpi"),
+                    width=3
+                )
+
+
+            ],
+
+            className="g-4"
+
+        ),
+
+
+        html.Br(),
+
+
+
+        dbc.Row(
+
+            [
+
+                dbc.Col(
+
+                    dcc.Graph(
+                        id="sunburst-chart"
+                    ),
+
+                    width=6
+
+                ),
+
+
+                dbc.Col(
+
+                    dcc.Graph(
+                        id="treemap-chart"
+                    ),
+
+                    width=6
+
+                )
+
+            ]
+
+        ),
+
+
+
+        html.Br(),
+
+
+
+        dbc.Row(
+
+            [
+
+                dbc.Col(
+
+                    dcc.Graph(
+                        id="status-chart"
+                    ),
+
+                    width=12
+
+                )
+
+            ]
+
+        )
+
+
+    ],
+
+    fluid=True
+
+)
+
+
+
+# =====================================================
+# RISK INTELLIGENCE TAB
+# =====================================================
+
+
+risk_tab = dbc.Container(
+
+    [
+
+        dbc.Row(
+
+            [
+
+                dbc.Col(
+
+                    dcc.Graph(
+                        id="heatmap-chart"
+                    ),
+
+                    width=6
+
+                ),
+
+
+                dbc.Col(
+
+                    dcc.Graph(
+                        id="module-chart"
+                    ),
+
+                    width=6
+
+                )
+
+
+            ]
+
+        ),
+
+
+
+        html.Br(),
+
+
+
+        dbc.Row(
+
+            [
+
+                dbc.Col(
+
+                    dcc.Graph(
+                        id="rootcause-chart"
+                    ),
+
+                    width=12
+
+                )
+
+            ]
+
+        )
+
+    ],
+
+    fluid=True
+
+)
+
+
+
+# =====================================================
+# DELIVERY ANALYTICS TAB
+# =====================================================
+
+
+delivery_tab = dbc.Container(
+
+    [
+
+        dbc.Row(
+
+            [
+
+                dbc.Col(
+
+                    dcc.Graph(
+                        id="vendor-chart"
+                    ),
+
+                    width=6
+
+                ),
+
+
+                dbc.Col(
+
+                    dcc.Graph(
+                        id="environment-chart"
+                    ),
+
+                    width=6
+
+                )
+
+
+            ]
+
+        )
+
+    ],
+
+    fluid=True
+
+)
+
+
+
+# =====================================================
+# AI INSIGHTS TAB
+# =====================================================
+
+
+ai_tab = dbc.Container(
+
+    [
+
+        html.H3(
+
+            "AI Generated Quality Intelligence"
+
+        ),
+
+
+
+        html.Div(
+
+            id="ai-insight-panel",
+
+            className="ai-panel"
+
+        )
+
+
+    ],
+
+    fluid=True
+
+)
+
+
+
+# =====================================================
+# MAIN APPLICATION LAYOUT
+# =====================================================
+
+
+app.layout = dbc.Container(
+
+    [
+
+        dbc.Row(
+
+            [
+
+                sidebar,
+
+
+                dbc.Col(
+
+                    [
+
+                        html.H1(
+
+                            "AI Defect Command Center",
+
+                            className="main-title"
+
+                        ),
+
+
+                        html.H5(
+
+                            "Predictive Quality Intelligence Platform",
+
+                            className="subtitle"
+
+                        ),
+
+
+                        html.Hr(),
+
+
+
+                        dcc.Tabs(
+
+                            [
+
+                                dcc.Tab(
+
+                                    label="Executive Overview",
+
+                                    children=executive_tab
+
+                                ),
+
+
+
+                                dcc.Tab(
+
+                                    label="Risk Intelligence",
+
+                                    children=risk_tab
+
+                                ),
+
+
+
+                                dcc.Tab(
+
+                                    label="Delivery Analytics",
+
+                                    children=delivery_tab
+
+                                ),
+
+
+
+                                dcc.Tab(
+
+                                    label="AI Insights",
+
+                                    children=ai_tab
+
+                                )
+
+
+                            ]
+
+                        )
+
+
+                    ],
+
+
+                    width=9
+
+
+                )
+
+            ]
+
+        )
+
+    ],
+
+
+    fluid=True,
+
+    className="app-container"
+
+)
+
+
+
 
 
 # -------------------------------------------------
