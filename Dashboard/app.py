@@ -68,89 +68,133 @@ def create_kpi_card(title, value, description):
     return dbc.Card(
         dbc.CardBody([
             html.H6(title, className="text-uppercase text-muted small"),
-            html.H2(value, className="mt-2 text-white font-weight-bold"),
+            html.H2(value, className="mt-2 font-weight-bold"),
             html.P(description, className="mb-0 text-info small")
         ]),
-        style={"backgroundColor": "#1B263B", "borderRadius": "10px", "margin": "5px 0"}
+        style={"borderRadius": "10px", "margin": "5px 0"}
     )
 
+def get_chart_template(theme_choice):
+    """Swaps internal plot templates and makes backgrounds transparent for the glass theme."""
+    template = "plotly_white" if theme_choice == "white" else "plotly_dark"
+    layout_adjustments = {}
+    if theme_choice == "glass":
+        layout_adjustments = {
+            "paper_bgcolor": "rgba(0,0,0,0)",
+            "plot_bgcolor": "rgba(0,0,0,0)"
+        }
+    return template, layout_adjustments
+
 # =====================================================
-# SIDEBAR FILTERS
+# SIDEBAR FILTERS WITH THEME TOGGLE
 # =====================================================
 
 sidebar = dbc.Col(
     [
-        html.H4("Dashboard Filters", className="mb-4 text-white"),
-        html.Hr(style={"color": "#fff"}),
+        html.H4("Dashboard Filters", className="mb-4"),
+        html.Hr(style={"color": "inherit"}),
         
-        html.H6("Environment", className="text-white-50么"),
+        # Theme Custom Selector
+        html.H6("Dashboard Theme", className="text-muted small"),
+        dcc.Dropdown(
+            id="theme-selector",
+            options=[
+                {"label": "🌑 Dark Black", "value": "black"},
+                {"label": "☀️ Clean White", "value": "white"},
+                {"label": "🔮 Premium Glass", "value": "glass"}
+            ],
+            value="black",
+            clearable=False,
+            className="mb-4" # Removed text-dark so it styles itself smoothly
+        ),
+        
+        html.Hr(style={"color": "inherit"}),
+        
+        html.H6("Environment", className="text-muted small"),
         dcc.Checklist(
             id="environment-filter", 
             options=[{"label": x, "value": x} for x in sorted(df["Environment"].dropna().unique())], 
-            value=[], className="mb-3 text-white"
+            value=[], className="mb-3"
         ),
         
-        html.H6("Vendor", className="text-white-50"),
+        html.H6("Vendor", className="text-muted small"),
         dcc.Checklist(
             id="vendor-filter", 
             options=[{"label": x, "value": x} for x in sorted(df["FixingVendor"].dropna().unique())], 
-            value=[], className="mb-3 text-white"
+            value=[], className="mb-3"
         ),
         
-        html.H6("Module", className="text-white-50"),
+        html.H6("Module", className="text-muted small"),
         dcc.Checklist(
             id="module-filter", 
             options=[{"label": x, "value": x} for x in sorted(df["ModuleName"].dropna().unique())], 
-            value=[], className="mb-3 text-white"
+            value=[], className="mb-3"
         ),
         
-        html.H6("Risk Level", className="text-white-50"),
+        html.H6("Risk Level", className="text-muted small"),
         dcc.Checklist(
             id="risk-filter", 
             options=[{"label": x, "value": x} for x in ["Critical", "High", "Medium", "Low"]], 
-            value=[], className="mb-3 text-white"
+            value=[], className="mb-3"
         )
     ],
     width=3,
-    style={"backgroundColor": "#111827", "padding": "25px", "minHeight": "100vh"}
+    className="sidebar-class",
+    style={"padding": "25px", "minHeight": "100vh"}
 )
 
 # =====================================================
-# MAIN LAYOUT CONTAINER
+# MAIN LAYOUT CONTAINER WITH MASTER WRAPPER
 # =====================================================
 
-app.layout = dbc.Container(
-    [
-        dbc.Row([
-            sidebar,
-            dbc.Col(
-                [
-                    html.H1("AI-Powered Predictive Defect Management Dashboard", className="mt-4 text-white text-center"),
-                    html.P("Machine Learning Driven Quality Risk Assessment & Delivery Intelligence", className="text-center text-muted"),
-                    html.Hr(style={"color": "#fff"}),
-                    
-                    dcc.Tabs(id="dashboard-tabs", value="executive", children=[
-                        dcc.Tab(label="Executive Overview", value="executive"),
-                        dcc.Tab(label="Risk Intelligence", value="risk"),
-                        dcc.Tab(label="Delivery Analytics", value="delivery"),
-                        dcc.Tab(label="AI Insights", value="ai")
-                    ]),
-                    html.Br(),
-                    html.Div(id="tab-content")
-                ],
-                width=9,
-                style={"padding": "25px"}
-            )
-        ])
-    ],
-    fluid=True,
-    style={"backgroundColor": "#0F172A", "minHeight": "100vh"}
+app.layout = html.Div(
+    id="theme-wrapper",
+    **{"data-theme": "black"}, # Native initialization tag
+    children=[
+        dbc.Container(
+            [
+                dbc.Row([
+                    sidebar,
+                    dbc.Col(
+                        [
+                            html.H1("AI-Powered Predictive Defect Management Dashboard", className="mt-4 text-center"),
+                            html.P("Machine Learning Driven Quality Risk Assessment & Delivery Intelligence", className="text-center text-muted"),
+                            html.Hr(style={"color": "inherit"}),
+                            
+                            dcc.Tabs(id="dashboard-tabs", value="executive", children=[
+                                dcc.Tab(label="Executive Overview", value="executive", className="tab", selected_className="tab--selected"),
+                                dcc.Tab(label="Risk Intelligence", value="risk", className="tab", selected_className="tab--selected"),
+                                dcc.Tab(label="Delivery Analytics", value="delivery", className="tab", selected_className="tab--selected"),
+                                dcc.Tab(label="AI Insights", value="ai", className="tab", selected_className="tab--selected")
+                            ]),
+                            html.Br(),
+                            html.Div(id="tab-content")
+                        ],
+                        width=9,
+                        style={"padding": "25px"}
+                    )
+                ])
+            ],
+            fluid=True,
+            className="app-container",
+            style={"minHeight": "100vh"}
+        )
+    ]
 )
 
 # =====================================================
-# CALLBACK 1: TAB ROUTER
+# CALLBACK 1: GLOBAL THEME SWITCHER
 # =====================================================
+@app.callback(
+    Output("theme-wrapper", "data-theme"),
+    Input("theme-selector", "value")
+)
+def change_dashboard_theme(theme_choice):
+    return theme_choice
 
+# =====================================================
+# CALLBACK 2: TAB ROUTER
+# =====================================================
 @app.callback(
     Output("tab-content", "children"),
     Input("dashboard-tabs", "value")
@@ -196,13 +240,13 @@ def render_tab(tab):
         
     elif tab == "ai":
         return dbc.Container([
-            html.H3("AI Generated Quality Intelligence", className="text-white"),
+            html.H3("AI Generated Quality Intelligence"),
             html.Hr(),
-            html.Div(id="ai-insight-panel", style={"backgroundColor": "#1E293B", "padding": "20px", "borderRadius": "10px"})
+            html.Div(id="ai-insight-panel", style={"padding": "20px", "borderRadius": "10px"})
         ], fluid=True)
 
 # =====================================================
-# HELPER FUNCTION FOR FILTERING DATA SHAREDBY CALLBACKS
+# FILTER HELPERS SHAREDBY VISUALIZATIONS
 # =====================================================
 def get_filtered_data(environments, vendors, modules, risks):
     filtered = df.copy()
@@ -217,7 +261,7 @@ def get_filtered_data(environments, vendors, modules, risks):
     return filtered
 
 # =====================================================
-# CALLBACK 2: EXECUTIVE TAB UPDATES
+# CALLBACK 3: EXECUTIVE TAB UPDATES
 # =====================================================
 @app.callback(
     [
@@ -233,20 +277,27 @@ def get_filtered_data(environments, vendors, modules, risks):
         Input("environment-filter", "value"),
         Input("vendor-filter", "value"),
         Input("module-filter", "value"),
-        Input("risk-filter", "value")
+        Input("risk-filter", "value"),
+        Input("theme-selector", "value")
     ]
 )
-def update_executive_tab(environments, vendors, modules, risks):
+def update_executive_tab(environments, vendors, modules, risks, theme_choice):
     filtered = get_filtered_data(environments, vendors, modules, risks)
+    template, layout_adjustments = get_chart_template(theme_choice)
     
     total = len(filtered)
     critical = len(filtered[filtered["RiskLevel"] == "Critical"])
     customer = len(filtered[filtered["CustomerImpact"] == "Yes"])
     ai_score = round(filtered["NumericRiskScore"].mean(), 1) if not filtered.empty else 0
 
-    sunburst = px.sunburst(filtered, path=["RiskLevel", "ModuleName", "FixingVendor"], title="Risk Concentration Intelligence", template="plotly_dark") if not filtered.empty else go.Figure()
-    treemap = px.treemap(filtered, path=["ModuleName", "DefectCategory"], title="Defect Portfolio Landscape", template="plotly_dark") if not filtered.empty else go.Figure()
-    status_chart = px.bar(filtered, x="DefectStatus", title="Defect Status Distribution", template="plotly_dark") if "DefectStatus" in filtered.columns and not filtered.empty else go.Figure()
+    sunburst = px.sunburst(filtered, path=["RiskLevel", "ModuleName", "FixingVendor"], title="Risk Concentration Intelligence", template=template) if not filtered.empty else go.Figure()
+    treemap = px.treemap(filtered, path=["ModuleName", "DefectCategory"], title="Defect Portfolio Landscape", template=template) if not filtered.empty else go.Figure()
+    status_chart = px.bar(filtered, x="DefectStatus", title="Defect Status Distribution", template=template) if "DefectStatus" in filtered.columns and not filtered.empty else go.Figure()
+
+    # Dynamic styling injection
+    for fig in [sunburst, treemap, status_chart]:
+        if not filtered.empty and layout_adjustments:
+            fig.update_layout(**layout_adjustments)
 
     return (
         create_kpi_card("Total Defects", total, "Current portfolio size"),
@@ -257,7 +308,7 @@ def update_executive_tab(environments, vendors, modules, risks):
     )
 
 # =====================================================
-# CALLBACK 3: RISK TAB UPDATES
+# CALLBACK 4: RISK TAB UPDATES
 # =====================================================
 @app.callback(
     [
@@ -269,30 +320,36 @@ def update_executive_tab(environments, vendors, modules, risks):
         Input("environment-filter", "value"),
         Input("vendor-filter", "value"),
         Input("module-filter", "value"),
-        Input("risk-filter", "value")
+        Input("risk-filter", "value"),
+        Input("theme-selector", "value")
     ]
 )
-def update_risk_tab(environments, vendors, modules, risks):
+def update_risk_tab(environments, vendors, modules, risks, theme_choice):
     filtered = get_filtered_data(environments, vendors, modules, risks)
+    template, layout_adjustments = get_chart_template(theme_choice)
     
     if filtered.empty:
         return go.Figure(), go.Figure(), go.Figure()
 
     temp = filtered.groupby(["ModuleName", "Priority"]).size().reset_index(name="Count")
-    heatmap = px.density_heatmap(temp, x="Priority", y="ModuleName", z="Count", title="Module Risk Heatmap", template="plotly_dark")
+    heatmap = px.density_heatmap(temp, x="Priority", y="ModuleName", z="Count", title="Module Risk Heatmap", template=template)
     
     modules_df = filtered["ModuleName"].value_counts().reset_index()
     modules_df.columns = ["Module", "Defects"]
-    module_chart = px.bar(modules_df, x="Module", y="Defects", title="Module Risk Exposure", template="plotly_dark")
+    module_chart = px.bar(modules_df, x="Module", y="Defects", title="Module Risk Exposure", template=template)
     
     rc = filtered["RootCause"].value_counts().reset_index() if "RootCause" in filtered.columns else pd.DataFrame(columns=["index", "count"])
     rc.columns = ["RootCause", "Count"]
-    rootcause = px.bar(rc, x="RootCause", y="Count", title="Root Cause Intelligence", template="plotly_dark")
+    rootcause = px.bar(rc, x="RootCause", y="Count", title="Root Cause Intelligence", template=template)
+
+    for fig in [heatmap, module_chart, rootcause]:
+        if layout_adjustments:
+            fig.update_layout(**layout_adjustments)
 
     return heatmap, module_chart, rootcause
 
 # =====================================================
-# CALLBACK 4: DELIVERY TAB UPDATES
+# CALLBACK 5: DELIVERY TAB UPDATES
 # =====================================================
 @app.callback(
     Output("vendor-chart", "figure"),
@@ -300,19 +357,27 @@ def update_risk_tab(environments, vendors, modules, risks):
         Input("environment-filter", "value"),
         Input("vendor-filter", "value"),
         Input("module-filter", "value"),
-        Input("risk-filter", "value")
+        Input("risk-filter", "value"),
+        Input("theme-selector", "value")
     ]
 )
-def update_delivery_tab(environments, vendors, modules, risks):
+def update_delivery_tab(environments, vendors, modules, risks, theme_choice):
     filtered = get_filtered_data(environments, vendors, modules, risks)
+    template, layout_adjustments = get_chart_template(theme_choice)
+    
     if filtered.empty:
         return go.Figure()
         
     vendor_df = filtered.groupby("FixingVendor").agg(Defects=("FixingVendor", "count"), AvgAge=("DefectAge", "mean")).reset_index()
-    return px.scatter(vendor_df, x="AvgAge", y="Defects", size="Defects", hover_name="FixingVendor", title="Vendor Performance Intelligence", template="plotly_dark")
+    vendor_chart = px.scatter(vendor_df, x="AvgAge", y="Defects", size="Defects", hover_name="FixingVendor", title="Vendor Performance Intelligence", template=template)
+    
+    if layout_adjustments:
+        vendor_chart.update_layout(**layout_adjustments)
+        
+    return vendor_chart
 
 # =====================================================
-# CALLBACK 5: AI INSIGHTS TAB UPDATES
+# CALLBACK 6: AI INSIGHTS TAB UPDATES
 # =====================================================
 @app.callback(
     Output("ai-insight-panel", "children"),
@@ -345,7 +410,7 @@ def update_ai_tab(environments, vendors, modules, risks):
         f"{aging} defects are aging beyond 45 days and may require escalation."
     ]
     
-    return [html.H5("AI Generated Recommendations", className="text-info mb-3")] + [html.P(f"• {item}", className="text-white") for item in insights]
+    return [html.H5("AI Generated Recommendations", className="text-info mb-3")] + [html.P(f"• {item}") for item in insights]
 
 
 if __name__ == "__main__":

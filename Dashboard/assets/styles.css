@@ -1,113 +1,128 @@
-body {
-    background-color:#0F172A;
+/* =====================================
+   THEME DEFINITIONS (VARIABLES)
+   ===================================== */
+
+/* 1. Pure Dark Black Theme */
+:root, [data-theme="black"] {
+    --bg-main: #000000;       /* Pure Black Canvas */
+    --bg-sidebar: #0A0A0A;    /* Slightly lighter black for distinction */
+    --bg-card: #000000;       /* Matches visuals/pure black background */
+    --text-primary: #FFFFFF;
+    --text-muted: #A3A3A3;
+    --border-color: #262626;
+    --accent: #0EA5E9;
+    --accent-hover: #38BDF8;
+    --backdrop-filter: none;
+    --card-shadow: none;
 }
 
-
-.app-container {
-    background:#0F172A;
+/* 2. Pure Clean White Theme */
+[data-theme="white"] {
+    --bg-main: #FFFFFF;       /* Pure White Canvas */
+    --bg-sidebar: #F8FAFC;    /* Soft gray sidebar */
+    --bg-card: #FFFFFF;       /* Clean white visual cards */
+    --text-primary: #0F172A;
+    --text-muted: #64748B;
+    --border-color: #E2E8F0;
+    --accent: #0284C7;
+    --accent-hover: #0EA5E9;
+    --backdrop-filter: none;
+    --card-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-
-.sidebar {
-
-    background:#111827;
-
-    min-height:100vh;
-
-    padding:25px;
-
+/* 3. Premium Glassmorphism Theme */
+[data-theme="glass"] {
+    --bg-main: linear-gradient(135deg, #0B0F19 0%, #1E1B4B 50%, #020617 100%);
+    --bg-sidebar: rgba(15, 23, 42, 0.4);
+    --bg-card: rgba(30, 41, 59, 0.45);
+    --text-primary: #FFFFFF;
+    --text-muted: #CBD5E1;
+    --border-color: rgba(255, 255, 255, 0.08);
+    --accent: #38BDF8;
+    --accent-hover: #7DD3FC;
+    --backdrop-filter: blur(16px) saturate(160%);
+    --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
+/* =====================================
+   APPLICATION CANVAS OVERRIDES (STRIP BOOTSTRAP DEFAULTS)
+   ===================================== */
 
-.sidebar-title {
-
-    color:#38BDF8;
-
+/* Force global HTML, Body, and main wrappers to follow the theme canvas variable */
+html, body, #theme-wrapper, .container-fluid, .app-container {
+    background: var(--bg-main) !important;
+    background-color: var(--bg-main) !important;
+    color: var(--text-primary) !important;
+    min-height: 100vh;
+    transition: background 0.3s ease, background-color 0.3s ease, color 0.3s ease;
 }
 
-
-
-.filter-list {
-
-    color:#E5E7EB;
-
+/* Sidebar Structural Override */
+.sidebar-class {
+    background-color: var(--bg-sidebar) !important;
+    backdrop-filter: var(--backdrop-filter);
+    -webkit-backdrop-filter: var(--backdrop-filter);
+    border-right: 1px solid var(--border-color);
+    transition: all 0.3s ease;
 }
 
-
-.filter-list label {
-
-    display:block;
-
-    margin-bottom:8px;
-
-    cursor:pointer;
-
+/* Dynamic Text Assertions */
+h1, h2, h3, h4, h5, h6, p, label, .sidebar-class h4, .sidebar-class h6 {
+    color: var(--text-primary) !important;
 }
 
+/* =====================================
+   COMPONENT FUNCTIONAL STYLES
+   ===================================== */
 
-.filter-list label:hover {
-
-    color:#38BDF8;
-
+/* Interactive Filter Labels */
+div[id$="-filter"] label {
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+div[id$="-filter"] label:hover {
+    color: var(--accent-hover) !important;
+}
+div[id$="-filter"] input[type="checkbox"] {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    accent-color: var(--accent);
 }
 
-
-
-.kpi-card {
-
-    background:#1E293B;
-
-    border-radius:15px;
-
-    padding:20px;
-
+/* Cards & Visual Layout Blocks */
+.card {
+    background-color: var(--bg-card) !important;
+    backdrop-filter: var(--backdrop-filter);
+    -webkit-backdrop-filter: var(--backdrop-filter);
+    border: 1px solid var(--border-color) !important;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
 }
 
-
-
-.kpi-title {
-
-    color:#94A3B8;
-
+/* Standard Dash Core Components Tabs */
+.tab {
+    background-color: var(--bg-sidebar) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border-color) !important;
+    cursor: pointer;
+}
+.tab--selected {
+    background-color: var(--accent) !important;
+    color: #FFFFFF !important;
+    border: 1px solid var(--accent) !important;
+    font-weight: bold;
 }
 
-
-.kpi-value {
-
-    color:white;
-
+/* Dropdown Choice Containers */
+.Select-control, .Select-menu-outer {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
 }
-
-
-.kpi-description {
-
-    color:#CBD5E1;
-
+.Select-value-label, .has-value>.Select-control>.Select-value, .VirtualizedSelectOption {
+    color: var(--text-primary) !important;
+    background-color: var(--bg-card) !important;
 }
-
-
-.main-title {
-
-    color:#38BDF8;
-
-}
-
-
-.subtitle {
-
-    color:#CBD5E1;
-
-}
-
-
-.ai-panel {
-
-    background:#1E293B;
-
-    padding:25px;
-
-    border-radius:15px;
-
-    color:#E5E7EB;
-
+.VirtualizedSelectFocusedOption {
+    background-color: var(--accent) !important;
+    color: #FFFFFF !important;
 }
