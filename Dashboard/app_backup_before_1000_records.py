@@ -11,113 +11,27 @@ import plotly.graph_objects as go
 # Load Data
 # -------------------------------------------------
 
-data_path = Path("..") / "Data" / "Defects Database Sample.xlsx"
+data_path = Path("..") / "Output" / "escalation_predictions.xlsx"
 
 df = pd.read_excel(data_path)
 
+
 # -------------------------------------------------
-# Dashboard Risk Intelligence Layer
-# -------------------------------------------------
-
-# Priority scoring
-
-priority_score = {
-    "Critical": 100,
-    "High": 75,
-    "Med": 50,
-    "Low": 25
-}
-
-df["PriorityScore"] = (
-    df["Priority"]
-    .map(priority_score)
-    .fillna(25)
-)
-
-
-# Customer impact scoring
-
-customer_score = {
-    "Yes": 100,
-    "No": 0
-}
-
-df["CustomerImpactScore"] = (
-    df["CustomerImpact"]
-    .map(customer_score)
-    .fillna(0)
-)
-
-
-# Defect age contribution
-
-df["AgeScore"] = (
-    df["DefectAge"]
-    .clip(upper=60)
-    / 60
-    * 100
-)
-
-
-# Escalation contribution
-
-escalation_score = {
-    "Yes": 100,
-    "No": 0
-}
-
-df["EscalationScore"] = (
-    df["EscalationFlag (Yes/No)"]
-    .map(escalation_score)
-    .fillna(0)
-)
-
-
-# Combined Risk Score
-
-df["RiskScore"] = (
-
-    df["PriorityScore"] * 0.35 +
-
-    df["CustomerImpactScore"] * 0.30 +
-
-    df["AgeScore"] * 0.20 +
-
-    df["EscalationScore"] * 0.15
-
-)
-
-
 # Risk Classification
+# -------------------------------------------------
 
 def assign_risk(score):
-
     if score >= 80:
         return "Critical"
-
     elif score >= 60:
         return "High"
-
     elif score >= 40:
         return "Medium"
-
     else:
         return "Low"
 
 
 df["RiskLevel"] = df["RiskScore"].apply(assign_risk)
-
-
-# Simulated AI escalation probability
-# (for dashboard storytelling)
-
-df["EscalationProbability"] = (
-    df["RiskScore"]
-    .clip(0,100)
-)
-
-
-# Create Risk Level from Risk Score
 
 
 # -------------------------------------------------
