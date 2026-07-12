@@ -1,5 +1,5 @@
 import dash
-from dash import Dash, html, dcc, Input, Output
+from dash import Dash, html, dcc, Input, Output, State
 import dash_bootstrap_components as dbc
 import pandas as pd
 from pathlib import Path
@@ -133,7 +133,7 @@ app = Dash(
 
 
 # -------------------------------------------------
-# Dropdown Options
+# CheckList Options
 # -------------------------------------------------
 
 environment_options = [
@@ -198,6 +198,10 @@ def create_card(title, value, subtitle):
 # Layout
 # -------------------------------------------------
 
+# -------------------------------------------------
+# Layout
+# -------------------------------------------------
+
 app.layout = dbc.Container(
 
     [
@@ -207,7 +211,7 @@ app.layout = dbc.Container(
             [
 
                 # -----------------------------
-                # Sidebar Filters
+                # Sidebar
                 # -----------------------------
 
                 dbc.Col(
@@ -215,93 +219,75 @@ app.layout = dbc.Container(
                     [
 
                         html.H4(
-                            "Dashboard Filters"
+                            "Dashboard Filters",
+                            className="mb-4"
                         ),
 
-                        html.Hr(),
 
+                        html.H6("Environment"),
 
-                        html.Label(
-                            "Environment"
-                        ),
-
-                        dcc.Dropdown(
+                        dcc.Checklist(
 
                             id="environment-filter",
 
                             options=environment_options,
 
-                            multi=True,
+                            value=[],
 
-                            placeholder="Select Environment"
+                            className="mb-3"
 
                         ),
 
 
-                        html.Br(),
+                        html.H6("Vendor"),
 
-
-                        html.Label(
-                            "Vendor"
-                        ),
-
-                        dcc.Dropdown(
+                        dcc.Checklist(
 
                             id="vendor-filter",
 
                             options=vendor_options,
 
-                            multi=True,
+                            value=[],
 
-                            placeholder="Select Vendor"
+                            className="mb-3"
 
                         ),
 
 
-                        html.Br(),
+                        html.H6("Module"),
 
-
-                        html.Label(
-                            "Module"
-                        ),
-
-                        dcc.Dropdown(
+                        dcc.Checklist(
 
                             id="module-filter",
 
                             options=module_options,
 
-                            multi=True,
+                            value=[],
 
-                            placeholder="Select Module"
+                            className="mb-3"
 
                         ),
 
 
-                        html.Br(),
+                        html.H6("Risk Level"),
 
-
-                        html.Label(
-                            "Risk Level"
-                        ),
-
-                        dcc.Dropdown(
+                        dcc.Checklist(
 
                             id="risk-filter",
 
                             options=risk_options,
 
-                            multi=True,
+                            value=[],
 
-                            placeholder="Select Risk"
+                            className="mb-3"
 
                         )
-
 
                     ],
 
 
                     width=3,
+
 
                     style={
 
@@ -318,7 +304,7 @@ app.layout = dbc.Container(
 
 
                 # -----------------------------
-                # Main Dashboard Area
+                # Main Area
                 # -----------------------------
 
                 dbc.Col(
@@ -334,9 +320,9 @@ app.layout = dbc.Container(
                         ),
 
 
-                        html.H5(
+                        html.P(
 
-                            "Machine Learning Driven Quality Risk Assessment & Escalation Intelligence",
+                            "Machine Learning Driven Quality Risk Assessment & Delivery Intelligence",
 
                             className="text-center text-muted"
 
@@ -347,62 +333,49 @@ app.layout = dbc.Container(
 
 
 
-                        dbc.Row(
+                        # Tabs
 
-                            [
+                        dcc.Tabs(
 
-                                dbc.Col(
-                                    html.Div(id="total-card"),
-                                    width=3
-                                ),
+                            id="dashboard-tabs",
 
-                                dbc.Col(
-                                    html.Div(id="critical-card"),
-                                    width=3
-                                ),
+                            value="executive",
 
-                                dbc.Col(
-                                    html.Div(id="high-card"),
-                                    width=3
-                                ),
-
-                                dbc.Col(
-                                    html.Div(id="confidence-card"),
-                                    width=3
-                                )
-
-                            ],
-
-                            className="g-4"
-
-                        ),
+                            children=[
 
 
-                        html.Br(),
+                                dcc.Tab(
 
+                                    label="Executive Overview",
 
-                        dbc.Row(
-
-                            [
-
-                                dbc.Col(
-
-                                    dcc.Graph(
-                                        id="risk-chart"
-                                    ),
-
-                                    width=6
+                                    value="executive"
 
                                 ),
 
 
-                                dbc.Col(
+                                dcc.Tab(
 
-                                    dcc.Graph(
-                                        id="priority-chart"
-                                    ),
+                                    label="Risk Intelligence",
 
-                                    width=6
+                                    value="risk"
+
+                                ),
+
+
+                                dcc.Tab(
+
+                                    label="Delivery Analytics",
+
+                                    value="delivery"
+
+                                ),
+
+
+                                dcc.Tab(
+
+                                    label="AI Insights",
+
+                                    value="ai"
 
                                 )
 
@@ -411,24 +384,14 @@ app.layout = dbc.Container(
                         ),
 
 
+
                         html.Br(),
 
 
-                        dbc.Row(
 
-                            [
+                        html.Div(
 
-                                dbc.Col(
-
-                                    dcc.Graph(
-                                        id="gauge-chart"
-                                    ),
-
-                                    width=12
-
-                                )
-
-                            ]
+                            id="tab-content"
 
                         )
 
@@ -438,7 +401,6 @@ app.layout = dbc.Container(
                     width=9
 
                 )
-
 
             ]
 
@@ -460,7 +422,136 @@ app.layout = dbc.Container(
 
 )
 
+# -------------------------------------------------
+# Tab Controller
+# -------------------------------------------------
 
+@app.callback(
+
+    Output(
+        "tab-content",
+        "children"
+    ),
+
+    Input(
+        "dashboard-tabs",
+        "value"
+    )
+
+)
+
+
+def render_tab(tab):
+
+
+    if tab == "executive":
+
+        return [
+
+            html.H3(
+                "Executive Overview"
+            ),
+
+
+            html.P(
+                "Portfolio health overview of defect volume, risk exposure and delivery impact."
+            ),
+
+
+            dbc.Row(
+
+                [
+
+                    dbc.Col(
+                        html.Div(id="total-card"),
+                        width=3
+                    ),
+
+
+                    dbc.Col(
+                        html.Div(id="critical-card"),
+                        width=3
+                    ),
+
+
+                    dbc.Col(
+                        html.Div(id="high-card"),
+                        width=3
+                    ),
+
+
+                    dbc.Col(
+                        html.Div(id="confidence-card"),
+                        width=3
+                    )
+
+                ]
+
+            ),
+
+
+            html.Br(),
+
+
+            dbc.Row(
+
+                [
+
+                    dbc.Col(
+
+                        dcc.Graph(
+                            id="risk-chart"
+                        ),
+
+                        width=6
+
+                    ),
+
+
+                    dbc.Col(
+
+                        dcc.Graph(
+                            id="priority-chart"
+                        ),
+
+                        width=6
+
+                    )
+
+                ]
+
+            ),
+
+
+            html.Br(),
+
+
+            dcc.Graph(
+                id="gauge-chart"
+            )
+
+        ]
+
+
+    elif tab == "risk":
+
+        return html.H3(
+            "Risk Intelligence - Coming Next"
+        )
+
+
+    elif tab == "delivery":
+
+        return html.H3(
+            "Delivery Analytics - Coming Next"
+        )
+
+
+    else:
+
+        return html.H3(
+            "AI Insights - Coming Next"
+        )
 
 # -------------------------------------------------
 # Callback - Dynamic Updates
